@@ -7,4 +7,4 @@
 
 
 
-# 解决vhost.exe 的问题，仓库上传至https://github.com/houshuai0816/IflySpeechDll-master
+# 可以进行语音识别和语音合成
