@@ -9,11 +9,14 @@ extern "C" {
 	//进行初始化语音识别
 	extern void onInitalISE();
 	//开启当前的语音识别
-	extern void  onStartRecognier(Resoult result, SpeechBegin begin, SpeechEnd end);
+	extern void  onStartRecognier(Resoult result, SpeechBegin begin, SpeechEnd end,const char* accent);
 	////用来处理当前开始的状态
 	//extern  void  Recognier_IsBegin(SpeechBegin begin);
 	////s
 	//extern  void  Recognier_IsEnd(SpeechEnd end);
+
+
+	extern void onStopRecoginer();
 
 
 

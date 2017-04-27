@@ -1,5 +1,6 @@
 
 #ifdef __cplusplus
+#include <iostream>
 extern "C" {
 #endif // __cplusplus
 
@@ -218,6 +219,7 @@ extern "C" {
 
 	int sr_init(struct speech_rec * sr, const char * session_begin_params, enum sr_audsrc aud_src, int devid, struct speech_rec_notifier * notify)
 	{
+		std::cout << "start sr_init"  << std::endl;
 		int errcode;
 		size_t param_size;
 		WAVEFORMATEX wavfmt = DEFAULT_FORMAT;
@@ -226,9 +228,10 @@ extern "C" {
 			return -E_SR_NOACTIVEDEVICE;
 		}
 
-		if (!sr)
-			return -E_SR_INVAL;
 
+		if (!sr) {
+			return -E_SR_INVAL;
+		}
 		if (session_begin_params == NULL) {
 			session_begin_params = DEFAULT_SESSION_PARA;
 		}
@@ -243,7 +246,7 @@ extern "C" {
 		param_size = strlen(session_begin_params) + 1;
 		sr->session_begin_params = (char*)SR_MALLOC(param_size);
 		if (sr->session_begin_params == NULL) {
-			sr_dbg("mem alloc failed\n");
+			std::cout << "mem alloc failed\n" <<  std::endl;
 			return -E_SR_NOMEM;
 		}
 		strncpy(sr->session_begin_params, session_begin_params, param_size - 1);
@@ -253,7 +256,7 @@ extern "C" {
 		if (aud_src == SR_MIC) {
 			errcode = create_recorder(&sr->recorder, iat_cb, (void*)sr);
 			if (sr->recorder == NULL || errcode != 0) {
-				sr_dbg("create recorder failed: %d\n", errcode);
+				std::cout << "create recorder failed: %d\n" << std::endl;
 				errcode = -E_SR_RECORDFAIL;
 				goto fail;
 			}
@@ -261,7 +264,7 @@ extern "C" {
 
 			errcode = open_recorder(sr->recorder, devid, &wavfmt);
 			if (errcode != 0) {
-				sr_dbg("recorder open failed: %d\n", errcode);
+				std::cout << "recorder open failed: %d\n" << std::endl;
 				errcode = -E_SR_RECORDFAIL;
 				goto fail;
 			}
@@ -270,6 +273,7 @@ extern "C" {
 		return 0;
 
 	fail:
+		std::cout << "init fial \n" << std::endl;
 		if (sr->recorder) {
 			destroy_recorder(sr->recorder);
 			sr->recorder = NULL;
@@ -291,16 +295,17 @@ extern "C" {
 		int				errcode = MSP_SUCCESS;
 
 		if (sr->state >= SR_STATE_STARTED) {
-			sr_dbg("already STARTED.\n");
+			std::cout << "already STARTED.\n" << std::endl;
 			return -E_SR_ALREADY;
 		}
 
 		session_id = QISRSessionBegin(NULL, sr->session_begin_params, &errcode); //听写不需要语法，第一个参数为NULL
 		if (MSP_SUCCESS != errcode)
 		{
-			sr_dbg("\nQISRSessionBegin failed! error code:%d\n", errcode);
+			std::cout << "\nQISRSessionBegin failed! error code:%d\n" <<errcode<< std::endl;
 			return errcode;
 		}
+ 		//开启了听写
 		sr->session_id = session_id;
 		sr->ep_stat = MSP_EP_LOOKING_FOR_SPEECH;
 		sr->rec_stat = MSP_REC_STATUS_SUCCESS;
@@ -309,7 +314,7 @@ extern "C" {
 		if (sr->aud_src == SR_MIC) {
 			ret = start_record(sr->recorder);
 			if (ret != 0) {
-				sr_dbg("start record failed: %d\n", ret);
+				std::cout << "start record failed: %d\n" << ret << std::endl;
 				QISRSessionEnd(session_id, "start record fail");
 				sr->session_id = NULL;
 				return -E_SR_RECORDFAIL;
@@ -321,8 +326,10 @@ extern "C" {
 
 		sr->state = SR_STATE_STARTED;
 
-		if (sr->notif.on_speech_begin)
+		if (sr->notif.on_speech_begin) {
 			sr->notif.on_speech_begin();
+			std::cout << "notif.on_speech_begin %d\n" << ret << std::endl;
+		}
 
 		return 0;
 	}

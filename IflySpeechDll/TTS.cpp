@@ -22,11 +22,21 @@ extern "C" {
 #include "msp_errors.h"
 #include "TTS.h"
 
+//设置播放语音库
+//#include <mmsystem.h>
+//#pragma comment(lib,"winmm.lib")
+
+
+
 #ifdef _WIN64
 #pragma comment(lib,"libs/msc_x64.lib")//x64
 #else
 #pragma comment(lib,"libs/msc.lib")//x86
 #endif
+
+
+AudioNeedStart mAudio = NULL;
+
 
 /* wav音频头部格式 */
 typedef struct _wave_pcm_hdr
@@ -145,39 +155,19 @@ int text_to_speech(const char* src_text, const char* des_path, const char* param
 	{
 		printf("QTTSSessionEnd failed, error code: %d.\n", ret);
 	}
-
+	//PlaySound(TEXT("faqrobot_tts.wav"), NULL, SND_FILENAME | SND_ASYNC );
+	mAudio("faqrobot_tts.wav");
 	return ret;
 }
 
 
 
 
-bool SUCCESS_REGISTER = false;
-//声明当前注册的用户
-bool initalTTS() {
-	int         ret = MSP_SUCCESS;
-	const char* login_params = "appid = 58d8b9b7, work_dir = .";//登录参数,appid与msc库绑定,请勿随意改动
-	ret = MSPLogin(NULL, NULL, login_params); //第一个参数是用户名，第二个参数是密码，第三个参数是登录参数，用户名和密码可在http://www.xfyun.cn注册获取
-	if (MSP_SUCCESS != ret) {
-		//注册成功
-		SUCCESS_REGISTER = true;
-		return true;
-	}
-	return false;
-}
-
-//注销当前的用户
-void onDestoryTTS() {
-	if (SUCCESS_REGISTER) {
-		MSPLogout();
-		SUCCESS_REGISTER = false;
-	}
-}
-
 //将当前的文本进行转化为语音
-void onTextToSpeech(const char* content) {
+void onTextToSpeech(const char* content, AudioNeedStart audio) {
 	//首先进行判断当前是否已经注册了科大的语音转文字
-	if (!SUCCESS_REGISTER) goto exit;
+	mAudio = audio;
+
 
 	//已经注册则开始进行文字转语音的功能
 
@@ -195,6 +185,9 @@ void onTextToSpeech(const char* content) {
 	*/
 	const char* session_begin_params = "voice_name = xiaoyan, text_encoding = gb2312, sample_rate = 16000, speed = 50, volume = 50, pitch = 50, rdn = 2";
 	const char* filename = "faqrobot_tts.wav"; //合成的语音文件名称
+	//开始进行合成
+	printf("开始进行合成语音的初始化操作");
+
 	ret = text_to_speech(content, filename, session_begin_params);
 	if (MSP_SUCCESS != ret) goto exit;
 	return ;

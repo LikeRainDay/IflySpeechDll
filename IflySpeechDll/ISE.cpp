@@ -1,6 +1,8 @@
 #pragma once
 
 #ifdef __cplusplus
+#include <iostream>
+
 extern "C" {
 #endif // __cplusplus
 
@@ -12,7 +14,6 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 #include <windows.h>
-
 #include <conio.h>
 #include <errno.h>
 #include <process.h>
@@ -24,7 +25,23 @@ extern "C" {
 
 #define FRAME_LEN	640 
 #define	BUFFER_SIZE	4096
+////普通话
+//#define MARDRAIN \
+//    "sub = iat, domain = iat, language = zh_cn, accent = mandarin, sample_rate = 16000, result_type = plain, result_encoding = gb2312"
+////粤语
+//#define CANTONESE \
+//    "sub = iat, domain = iat, language = zh_cn, accent = cantonese, sample_rate = 16000, result_type = plain, result_encoding = gb2312"
+////四川话
+//#define LMZ \
+//    "sub = iat, domain = iat, language = zh_cn, accent = lmz, sample_rate = 16000, result_type = plain, result_encoding = gb2312"
+////河南话
+//#define HENANESE \
+//    "sub = iat, domain = iat, language = zh_cn, accent = henanese, sample_rate = 16000, result_type = plain, result_encoding = gb2312"
+//
 
+
+
+		
 	//声明全局属性
 	struct speech_rec iat;
 	//当前的错误编码  正常为0
@@ -43,45 +60,24 @@ extern "C" {
 		if (!isInitalSuccess)return;
 	}
 
-	Resoult* mResult = NULL;
-	SpeechBegin* mSpeechBegin = NULL;
-	SpeechEnd* mSpeechEnd = NULL;
+	Resoult mResult = NULL;
+	SpeechBegin mSpeechBegin = NULL;
+	SpeechEnd mSpeechEnd = NULL;
 
 	static HANDLE events[EVT_TOTAL] = { NULL,NULL,NULL };
 
 	static COORD begin_pos = { 0, 0 };
 	static COORD last_pos = { 0, 0 };
 	//用来显示请求后的结果
+	static char * lastWord = NULL;
+
 	static void show_result(char *string, char is_over)
 	{
-		if (mResult)
-		{
-			printf("当前问题的结果是 %s", string);
-			(*mResult)((wchar_t*)string);
-			//free(mResult);
-		}
-
-		//COORD orig, current;
-		//CONSOLE_SCREEN_BUFFER_INFO info;
-		//HANDLE w = GetStdHandle(STD_OUTPUT_HANDLE);
-		//GetConsoleScreenBufferInfo(w, &info);
-		//current = info.dwCursorPosition;
-
-		//if (current.X == last_pos.X && current.Y == last_pos.Y) {
-		//	SetConsoleCursorPosition(w, begin_pos);
-		//}
-		//else {
-		//	/* changed by other routines, use the new pos as start */
-		//	begin_pos = current;
-		//}
-		//if (is_over)
-		//	SetConsoleTextAttribute(w, FOREGROUND_GREEN);
-		//printf("Result: [ %s ]\n", string);
-		//if (is_over)
-		//	SetConsoleTextAttribute(w, info.wAttributes);
-
-		//GetConsoleScreenBufferInfo(w, &info);
-		//last_pos = info.dwCursorPosition;
+		//lastWord = string;
+	/*	printf("当前识别结果  : [%s]" , string);
+		if (mResult) {
+			mResult(string);
+		}*/
 	}
 
 
@@ -91,7 +87,13 @@ extern "C" {
 
 	void on_result(const char *result, char is_last)
 	{
-		if (result) {
+		std::cout << "--on_result--result--"<< result << std::endl;
+		std::cout << "--on_result----is_last--" << is_last << std::endl;
+		if (result&&mResult) {
+			mResult((char* )result);
+		}
+		//转接证
+		/*if (result) {
 			size_t left = g_buffersize - 1 - strlen(g_result);
 			size_t size = strlen(result);
 			if (left < size) {
@@ -105,10 +107,11 @@ extern "C" {
 			}
 			strncat(g_result, result, size);
 			show_result(g_result, is_last);
-		}
+		}*/
 	}
 	void on_speech_begin()
 	{
+		std::cout << "--on_speech_begin--" << std::endl;
 		if (g_result)
 		{
 			free(g_result);
@@ -119,35 +122,35 @@ extern "C" {
 
 		if (mSpeechBegin)
 		{
-			(*mSpeechBegin)();
+			
+			mSpeechBegin();
 		}
-
-		printf("Start Listening...\n");
+		std::cout << "Start Listening...\n" << std::endl;
 	}
 	void on_speech_end(int reason)
 	{
-		if (reason == END_REASON_VAD_DETECT)
-			printf("\nSpeaking done \n");
+		std::cout << "--on_speech_end--" << std::endl;
+		if (reason == END_REASON_VAD_DETECT) {
+			std::cout << "\nSpeaking done \n" << std::endl;
+		}
 		if (mSpeechEnd)
 		{
-			(*mSpeechEnd)();
+			//显示结果
+
+			mSpeechEnd();
 		}
 		else
-			printf("\nRecognizer error %d\n", reason);
-
+		 std::cout << "\nRecognizer error %d\n" << std::endl;
 
 
 	}
 
-	
-	
 
 	//用来进行停止当前的语音识别
 	 void onStopRecoginer(){
 		 isInitSuccess();
 		 if (errcode = sr_stop_listening(&iat)) {
-			 printf("stop listening failed %d\n", errcode);
-			
+			 std::cout << "top listening failed -------%d\n"<< errcode << std::endl;
 		 }
 	 
 	 }
@@ -158,51 +161,53 @@ extern "C" {
 		 sr_uninit(&iat);
 	 }
 	
-	 void onStartRecognier(Resoult result, SpeechBegin begin, SpeechEnd end) {
-		 isInitSuccess();
-		 mResult = &result;
-		 mSpeechBegin = &begin;
-		 mSpeechEnd = &end;
-		 if (errcode = sr_start_listening(&iat)) {
-			 printf("stop listening failed %d\n", errcode);
+
+
+	 struct speech_rec_notifier recnotifier = {
+		 on_result,
+		 on_speech_begin,
+		 on_speech_end
+	 };
+	 void onStartRecognier(Resoult result, SpeechBegin begin, SpeechEnd end,const char * accent) {
+
+		 if (!&iat) {
+			 sr_uninit(&iat);
 		 }
-	 }
-	 ////用来处理当前开始的状态
-	 //void Recognier_IsBegin(SpeechBegin begin);
-	
-	 // void  Recognier_IsEnd(SpeechEnd end);
-
-
-
-	 //用来初始化ISE的语音合成
-	 void onInitalISE() {
-		 printf("进行初始化");
-
-		 struct speech_rec_notifier recnotifier = {
-			 on_result,
-			 on_speech_begin,
-			 on_speech_end
-		 };
-
-		 /*
-		 * sub:				请求业务类型
-		 * domain:			领域
-		 * language:			语言
-		 * accent:			方言
-		 * sample_rate:		音频采样率
-		 * result_type:		识别结果格式
-		 * result_encoding:	结果编码格式
-		 *
-		 * 详细参数说明请参阅《iFlytek MSC Reference Manual》
-		 */
-		 const char* session_begin_params = "sub = iat, domain = iat, language = zh_cn, accent = mandarin, sample_rate = 16000, result_type = plain, result_encoding = gb2312";
-		 errcode = sr_init(&iat, session_begin_params, SR_MIC, DEFAULT_INPUT_DEVID, &recnotifier);
+		 char  c[200];
+		 sprintf(c,"sub = iat, domain = iat, language = zh_cn, accent = %s, sample_rate = 16000, result_type = plain, result_encoding = gb2312", accent);
+		 std::cout << "--当前--" << c << "---\n" << std::endl;
+		 std::cout << "--错误吗--" << errcode << "\n" << std::endl;
+		 errcode = sr_init(&iat, c, SR_MIC, DEFAULT_INPUT_DEVID, &recnotifier);
 		 if (errcode) {
 			 printf("speech recognizer init failed\n");
 			 isInitalSuccess = false;
 			 return;
 		 }
 		 isInitalSuccess = true;
+		 //isInitSuccess();
+		 mResult = result;
+		 mSpeechBegin = begin;
+		 mSpeechEnd = end;
+		 if (errcode = sr_start_listening(&iat)) {
+			 printf("stop listening failed %d\n", errcode);
+		 }
+	 }
+
+
+	 ////用来处理当前开始的状态
+	 //void Recognier_IsBegin(SpeechBegin begin);
+	 // void  Recognier_IsEnd(SpeechEnd end);
+	 //用来初始化ISE的语音合成
+
+
+
+	 void onInitalISE() {
+		const char* login_params = "appid = 58d4949a, work_dir = ."; // 登录参数，appid与msc库绑定,请勿随意改动
+		int	ret = MSPLogin(NULL, NULL, login_params); //第一个参数是用户名，第二个参数是密码，均传NULL即可，第三个参数是登录参数	
+		if (MSP_SUCCESS != ret) {
+			std::cout << "MSPLogin failed , Error code %d.\n" << ret << std::endl;
+			return; //登录失败，退出登录
+		}
 	 }
 
 
